@@ -1,5 +1,6 @@
 project(codeeurope CXX)
 cmake_minimum_required(VERSION 3.0)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include (CMakeParseArguments)
 
@@ -40,3 +41,5 @@ add_exec(NAME rvalues STANDARD 11)
 add_exec(NAME smartptrs)
 add_exec(NAME smartptrs STANDARD 98)
 
+add_exec(NAME functions)
+add_exec(NAME functions_98 STANDARD 98)
