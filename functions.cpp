@@ -53,4 +53,3 @@ BENCHMARK(freeFunctionTest)->Range(8, 8 << 10);
 BENCHMARK(memberFunctionTest)->Range(8, 8 << 10);
 BENCHMARK(indirectCall)->Range(8, 8 << 10);
 BENCHMARK_MAIN()
-

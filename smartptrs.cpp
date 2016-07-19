@@ -3,31 +3,52 @@
 #include <boost/config.hpp>
 #include <memory>
 
-struct Resource {};
+#include "common.hpp"
 
-#ifdef BOOST_NO_CXX11_SMART_PTR
-typedef Resource *ResourcePtr;
-#else
-// typedef  std::shared_ptr<Resource> ResourcePtr;
-typedef std::unique_ptr<Resource> ResourcePtr;
-#endif
+struct Resource {
+    void aFunction(const std::string &name) {}
+};
 
-ResourcePtr getResource() {
-#ifdef BOOST_NO_CXX11_SMART_PTR
-    return new Resource;
-#else
-    // return std::make_shared<Resource>();
-    return std::make_unique<Resource>();
-#endif
-}
-
-static void BM_SharedPointerUsage(benchmark::State &state) {
+static void uniquePtrCreate(benchmark::State &state) {
     while (state.KeepRunning()) {
-        ResourcePtr res = getResource();
-        benchmark::DoNotOptimize(res);
+        for (int i = 0; i < state.range_x(); ++i) {
+            auto res = std::make_unique<Resource>();
+            benchmark::DoNotOptimize(res);
+        }
     }
 }
 
-BENCHMARK(BM_SharedPointerUsage);
+void rawPointerCreate(benchmark::State &state) {
+    while (state.KeepRunning()) {
+        for (int i = 0; i < state.range_x(); ++i) {
+            auto res = new Resource;
+            benchmark::DoNotOptimize(res);
+        }
+    }
+}
 
+void rawPointerCall(benchmark::State &state) {
+    while (state.KeepRunning()) {
+        for (int i = 0; i < state.range_x(); ++i) {
+            auto res = new Resource;
+            res->aFunction("");
+            benchmark::DoNotOptimize(res);
+        }
+    }
+}
+
+void uniquePointerCall(benchmark::State &state) {
+    while (state.KeepRunning()) {
+        for (int i = 0; i < state.range_x(); ++i) {
+            auto res = std::make_unique<Resource>();
+            res->aFunction("");
+            benchmark::DoNotOptimize(res);
+        }
+    }
+}
+
+BENCHMARK(rawPointerCreate)->Range(8, 8 << 10);
+BENCHMARK(uniquePtrCreate)->Range(8, 8 << 10);
+BENCHMARK(rawPointerCall)->Range(8, 8 << 10);
+BENCHMARK(uniquePointerCall)->Range(8, 8 << 10);
 BENCHMARK_MAIN()
