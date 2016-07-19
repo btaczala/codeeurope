@@ -2,7 +2,13 @@ project(codeeurope CXX)
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(BENCHMARK_ENABLE_TESTING OFF)
+add_subdirectory(google-benchmark)
+include_directories(${CMAKE_SOURCE_DIR}/google-benchmark/include)
+
 include (CMakeParseArguments)
+
+add_definitions("-fno-exceptions -fno-rtti")
 
 function(add_exec) 
 
@@ -39,7 +45,6 @@ add_exec(NAME rvalues STANDARD 98 FLAGS "-fno-elide-constructors")
 add_exec(NAME rvalues STANDARD 11)
 
 add_exec(NAME smartptrs)
-add_exec(NAME smartptrs STANDARD 98)
 
 add_exec(NAME functions)
 add_exec(NAME functions_98 STANDARD 98)
