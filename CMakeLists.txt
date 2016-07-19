@@ -47,4 +47,3 @@ add_exec(NAME rvalues STANDARD 11)
 add_exec(NAME smartptrs)
 
 add_exec(NAME functions)
-add_exec(NAME functions_98 STANDARD 98)
