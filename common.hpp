@@ -22,9 +22,3 @@ struct remove_pointer<T *const volatile> {
 };
 
 
-struct SomeType {
-    std::string aFunction(const std::string &,
-                          const std::vector<std::string> &vec) {
-        return "";
-    }
-};
