@@ -1,7 +1,0 @@
-* Function pointers vs std::function (TR1) 
-* Pointers vs smart pointers
-* Rvalue references vs old style vs RVO & copy elision
-* type safe printf version vs old style (performance, performance) 
-* lambdas c++11/14 vs functors (c++98)
-
-title: Usprawnienia w standardzie C++11/14. Czy nowe zabawki powodują czkawkę? 

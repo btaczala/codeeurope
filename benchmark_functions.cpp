@@ -1,6 +1,3 @@
-/**
- */
-#include "common.hpp"
 #include <benchmark/benchmark.h>
 #include <functional>
 #include <iostream>
@@ -23,8 +20,6 @@ typedef std::function<std::string(const std::string &,
     StdCallback_t;
 typedef std::string (SomeType::*Callback_t)(const std::string &,
                                             const std::vector<std::string> &);
-typedef std::string (*FreeCallback_t)(const std::string &,
-                                      const std::vector<std::string> &);
 
 struct DifferentType {
     std::map<std::string, std::string> anotherFunction(const StdCallback_t &t) {
@@ -45,10 +40,14 @@ class Cpp98Fixture : public benchmark::Fixture {};
 class Cpp14Fixture : public benchmark::Fixture {};
 
 BENCHMARK_DEFINE_F(Cpp98Fixture, freeFunctionTest)(benchmark::State &state) {
+    typedef std::string (*FreeCallback_t)(const std::string &,
+                                          const std::vector<std::string> &);
     while (state.KeepRunning()) {
         FreeCallback_t cb = &freeFunction;
         for (int i = 0; i < state.range_x(); ++i) {
-            auto result = cb("", std::vector<std::string>());
+            std::string res{};
+            benchmark::DoNotOptimize(res = cb("", std::vector<std::string>()));
+            benchmark::ClobberMemory();
         }
     }
 }
@@ -57,7 +56,26 @@ BENCHMARK_DEFINE_F(Cpp14Fixture, freeFunctionTest)(benchmark::State &state) {
     while (state.KeepRunning()) {
         StdCallback_t cb{&freeFunction};
         for (int i = 0; i < state.range_x(); ++i) {
-            auto result = cb("", std::vector<std::string>());
+            std::string result;
+            benchmark::DoNotOptimize(result =
+                                         cb("", std::vector<std::string>()));
+            benchmark::ClobberMemory();
+        }
+    }
+}
+BENCHMARK_DEFINE_F(Cpp14Fixture, freeFunctionTest_lambda)
+(benchmark::State &state) {
+    while (state.KeepRunning()) {
+        StdCallback_t cb = [](const std::string &,
+                              const std::vector<std::string> &) -> auto {
+            return "";
+        };
+        ;
+        for (int i = 0; i < state.range_x(); ++i) {
+            std::string result;
+            benchmark::DoNotOptimize(result =
+                                         cb("", std::vector<std::string>()));
+            benchmark::ClobberMemory();
         }
     }
 }
@@ -67,19 +85,23 @@ BENCHMARK_DEFINE_F(Cpp98Fixture, memberFunctionTest)(benchmark::State &state) {
     while (state.KeepRunning()) {
         Callback_t cb = &SomeType::aFunction;
         for (int i = 0; i < state.range_x(); ++i) {
-            auto result = ((t).*(cb))("", std::vector<std::string>());
+            std::string result{};
+            benchmark::DoNotOptimize(
+                result = ((t).*(cb))("a string", {"asd", "qwe"}));
+            benchmark::ClobberMemory();
         }
     }
 }
 
 BENCHMARK_DEFINE_F(Cpp14Fixture, memberFunctionTest)(benchmark::State &state) {
     SomeType t;
+    StdCallback_t cb{std::bind(&SomeType::aFunction, &t, std::placeholders::_1,
+                               std::placeholders::_2)};
     while (state.KeepRunning()) {
-        StdCallback_t cb;
         for (int i = 0; i < state.range_x(); ++i) {
-            cb = std::bind(&SomeType::aFunction, &t, std::placeholders::_1,
-                           std::placeholders::_2);
-            cb("a string", {"asd", "qwe"});
+            std::string result{};
+            benchmark::DoNotOptimize(result = cb("a string", {"asd", "qwe"}));
+            benchmark::ClobberMemory();
         }
     }
 }
@@ -109,8 +131,10 @@ BENCHMARK_DEFINE_F(Cpp14Fixture, indirectCall)(benchmark::State &state) {
 
 BENCHMARK_REGISTER_F(Cpp98Fixture, freeFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, freeFunctionTest)->Range(8, 8 << 10);
+BENCHMARK_REGISTER_F(Cpp14Fixture, freeFunctionTest_lambda)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp98Fixture, memberFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, memberFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp98Fixture, indirectCall)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, indirectCall)->Range(8, 8 << 10);
+
 BENCHMARK_MAIN()

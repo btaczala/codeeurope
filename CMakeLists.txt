@@ -10,41 +10,32 @@ include (CMakeParseArguments)
 
 add_definitions("-fno-exceptions -fno-rtti")
 
-function(add_exec) 
+function(add_benchmark) 
 
     set(oneValueArgs NAME STANDARD)
     set(multiValues FILES FLAGS)
     cmake_parse_arguments(add_exec "" "${oneValueArgs}" "${multiValues}" ${ARGN})
 
     if(NOT add_exec_FILES) 
-        set(cpp_files ${add_exec_NAME}.cpp)
+        set(cpp_files benchmark_${add_exec_NAME}.cpp)
     else()
-        set(cpp_files ${add_exec_FILES})
+        set(cpp_files benchmark_${add_exec_FILES})
     endif()
 
-    if(NOT add_exec_STANDARD)
-        set(standard 14)
-    else()
-        set(standard ${add_exec_STANDARD})
-    endif()
-
+    set(standard 17)
     if(add_exec_FLAGS)
         message(STATUS "Setting flags ${add_exec_FLAGS}")
         add_definitions(${add_exec_FLAGS})
     endif()
 
-    set(name ${add_exec_NAME}_${standard})
+    set(name benchmark_${add_exec_NAME}_${standard})
 
     add_executable(${name} ${cpp_files})
     target_link_libraries(${name} benchmark)
-    set_property(TARGET ${name} PROPERTY CXX_STANDARD ${standard})
 endfunction()
 
-add_exec(NAME rvalues)
-add_exec(NAME rvalues STANDARD 98 FLAGS "-fno-elide-constructors")
-add_exec(NAME rvalues STANDARD 11)
+add_definitions(-std=c++1z)
 
-add_exec(NAME smartptrs)
-
-add_exec(NAME functions)
-add_exec(NAME array)
+add_benchmark(NAME smartptrs)
+add_benchmark(NAME functions)
+add_benchmark(NAME array)
