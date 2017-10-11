@@ -3,6 +3,8 @@
 #include <iostream>
 #include <map>
 
+#include "inplace_function.h"
+
 struct SomeType {
     std::string aFunction(const std::string &,
                           const std::vector<std::string> &) {
@@ -35,18 +37,25 @@ struct DifferentType {
         return ret;
     }
 };
+typedef std::string (*FreeCallback_t)(const std::string &,
+                                      const std::vector<std::string> &);
 
 class Cpp98Fixture : public benchmark::Fixture {};
 class Cpp14Fixture : public benchmark::Fixture {};
+class InplaceFunction : public benchmark::Fixture {};
+
+template <typename Return, typename Callback, typename... Args>
+Return call_function(Callback &&cb, Args &&... args) {
+    return cb(std::forward<Args>(args)...);
+}
 
 BENCHMARK_DEFINE_F(Cpp98Fixture, freeFunctionTest)(benchmark::State &state) {
-    typedef std::string (*FreeCallback_t)(const std::string &,
-                                          const std::vector<std::string> &);
     while (state.KeepRunning()) {
-        FreeCallback_t cb = &freeFunction;
         for (int i = 0; i < state.range(0); ++i) {
             std::string res{};
-            benchmark::DoNotOptimize(res = cb("", std::vector<std::string>()));
+            benchmark::DoNotOptimize(
+                res = call_function<std::string>(freeFunction, std::string{""},
+                                                 std::vector<std::string>{}));
             benchmark::ClobberMemory();
         }
     }
@@ -54,11 +63,25 @@ BENCHMARK_DEFINE_F(Cpp98Fixture, freeFunctionTest)(benchmark::State &state) {
 
 BENCHMARK_DEFINE_F(Cpp14Fixture, freeFunctionTest)(benchmark::State &state) {
     while (state.KeepRunning()) {
-        StdCallback_t cb{&freeFunction};
         for (int i = 0; i < state.range(0); ++i) {
             std::string result;
-            benchmark::DoNotOptimize(result =
-                                         cb("", std::vector<std::string>()));
+            benchmark::DoNotOptimize(
+                result = call_function<std::string, StdCallback_t>(
+                    freeFunction, std::string{""}, std::vector<std::string>{}));
+            benchmark::ClobberMemory();
+        }
+    }
+}
+
+BENCHMARK_DEFINE_F(InplaceFunction, freeFunctionTest)(benchmark::State &state) {
+    while (state.KeepRunning()) {
+        using inplace_fun_t = stdext::inplace_function<std::string(
+            const std::string &, const std::vector<std::string> &)>;
+        for (int i = 0; i < state.range(0); ++i) {
+            std::string result;
+            benchmark::DoNotOptimize(
+                result = call_function<std::string, inplace_fun_t>(
+                    freeFunction, std::string{""}, std::vector<std::string>{}));
             benchmark::ClobberMemory();
         }
     }
@@ -131,6 +154,7 @@ BENCHMARK_DEFINE_F(Cpp14Fixture, indirectCall)(benchmark::State &state) {
 
 BENCHMARK_REGISTER_F(Cpp98Fixture, freeFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, freeFunctionTest)->Range(8, 8 << 10);
+BENCHMARK_REGISTER_F(InplaceFunction, freeFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, freeFunctionTest_lambda)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp98Fixture, memberFunctionTest)->Range(8, 8 << 10);
 BENCHMARK_REGISTER_F(Cpp14Fixture, memberFunctionTest)->Range(8, 8 << 10);

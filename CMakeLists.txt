@@ -8,7 +8,7 @@ include_directories(${CMAKE_SOURCE_DIR}/google-benchmark/include)
 
 include (CMakeParseArguments)
 
-add_definitions("-fno-exceptions -fno-rtti")
+#add_definitions("-fno-exceptions -fno-rtti")
 
 function(add_benchmark) 
 
