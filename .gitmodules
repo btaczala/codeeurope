@@ -1,3 +1,6 @@
 [submodule "google-benchmark"]
 	path = google-benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "toolchains"]
+	path = toolchains
+	url = https://github.com/vpetrigo/arm-cmake-toolchains.git
